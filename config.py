@@ -1,0 +1,3 @@
+TOKEN = "8215108375:AAHajh2aQB1ILaXoh0k2sWWv6U6I_eoxiuQ"
+ADMIN_IDS = [6296302270]  # Asosiy adminlar ro‘yxati
+PYTHON_VERSION = "3.10.12"

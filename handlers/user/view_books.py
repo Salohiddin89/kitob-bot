@@ -40,7 +40,7 @@ def register(dp: Dispatcher):
             f"📘Kitob Nomi: <b>{book['title']}</b>\n"
             f"✍️Kitob Yozuvchisi: {book['author']}\n"
             f"📄Kitob {book['pages']} betdan iborat\n"
-            f"📅Kitob {book['year']}yilda chiqan\n"
+            f"📅Kitob {book['year']}-yilda chiqan\n"
             f"💰Kitob narxi: <b>{book['price']} so‘m</b>\n"
             f"📝Kitob xaqida qisqacha malumot: {book['description']}"
         )

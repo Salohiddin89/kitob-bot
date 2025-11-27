@@ -12,6 +12,6 @@ def register(dp: Dispatcher):
         admins = cursor.fetchall()
         text = "👨‍💼 Adminlar:\n"
         for admin in admins:
-            text += f"@{admin['username']}\n"
+            text += f"{admin['username']}\n"
         text += "\n📱 Bog‘lanish: +998 90 910 17 70"
         await msg.answer(text)

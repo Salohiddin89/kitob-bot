@@ -57,7 +57,10 @@ def register(dp: Dispatcher):
 
     @dp.message_handler(state=AddBook.price)
     async def confirm_book_preview(msg: types.Message, state: FSMContext):
-        await state.update_data(price=int(msg.text))
+        # Narxni string sifatida saqlaymiz
+        price_text = msg.text.strip()
+
+        await state.update_data(price=price_text)
         data = await state.get_data()
         text = (
             f"📘 <b>{data['title']}</b>\n"

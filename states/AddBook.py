@@ -8,5 +8,5 @@ class AddBook(StatesGroup):
     Description = State()
     Year = State()
     price = State()
-    Image = State()
+    Images = State()
     Confirm = State()

@@ -26,6 +26,14 @@ def init_db():
     )""")
 
     cursor.execute("""
+    CREATE TABLE IF NOT EXISTS book_images (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        book_id INTEGER,
+        image TEXT,
+        FOREIGN KEY (book_id) REFERENCES books(id)
+    )""")
+
+    cursor.execute("""
     CREATE TABLE IF NOT EXISTS cart (
         user_id INTEGER,
         book_id INTEGER

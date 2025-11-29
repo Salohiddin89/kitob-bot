@@ -23,8 +23,14 @@ def register(dp: Dispatcher):
         book_id = int(call.data.split("_")[1])
         db = get_db()
         cursor = db.cursor()
+
+        # Kitob ma'lumotlarini olish
         cursor.execute("SELECT * FROM books WHERE id = ?", (book_id,))
         book = cursor.fetchone()
+
+        # Kitobga tegishli barcha rasmlarni olish
+        cursor.execute("SELECT image FROM book_images WHERE book_id = ?", (book_id,))
+        images = cursor.fetchall()
 
         # Savatga qo‘shish tugmalari
         kb = InlineKeyboardMarkup(row_width=1)
@@ -36,6 +42,7 @@ def register(dp: Dispatcher):
             InlineKeyboardButton("🏠 Bosh menyu", callback_data="main_menu"),
         )
 
+        # Kitob haqida matn
         text = (
             f"📘Kitob Nomi: <b>{book['title']}</b>\n"
             f"✍️Kitob Yozuvchisi: {book['author']}\n"
@@ -45,9 +52,25 @@ def register(dp: Dispatcher):
             f"📝Kitob xaqida qisqacha malumot: {book['description']}"
         )
 
-        await call.message.answer_photo(
-            photo=book["image"], caption=text, reply_markup=kb, parse_mode="HTML"
-        )
+        # Agar bir nechta rasm bo‘lsa — media group yuborish
+        if images:
+            media = []
+            for i, img in enumerate(images):
+                if i == 0:
+                    media.append(
+                        types.InputMediaPhoto(
+                            media=img["image"], caption=text, parse_mode="HTML"
+                        )
+                    )
+                else:
+                    media.append(types.InputMediaPhoto(media=img["image"]))
+            await call.message.answer_media_group(media)
+            await call.message.answer(
+                "⬇️ Quyidagi tugmalar orqali davom eting:", reply_markup=kb
+            )
+        else:
+            # Agar rasm yo‘q bo‘lsa, faqat matn yuboriladi
+            await call.message.answer(text, reply_markup=kb, parse_mode="HTML")
 
     @dp.callback_query_handler(lambda c: c.data == "back_books")
     async def back_to_books(call: types.CallbackQuery):

@@ -42,24 +42,48 @@ def register(dp: Dispatcher):
     @dp.message_handler(state=AddBook.Year)
     async def get_year(msg: types.Message, state: FSMContext):
         await state.update_data(year=int(msg.text))
-        await msg.answer("🖼 Kitob rasmi (URL yoki fayl sifatida):")
-        await AddBook.Image.set()
+        await msg.answer(
+            "🖼 Kitob rasmlarini yuboring (maks. 3 ta). Har birini alohida yuboring. Tugatgach /next deb yozing:"
+        )
+        await AddBook.Images.set()
 
-    @dp.message_handler(content_types=["text", "photo"], state=AddBook.Image)
-    async def get_image(msg: types.Message, state: FSMContext):
+    @dp.message_handler(content_types=["text", "photo"], state=AddBook.Images)
+    async def get_images(msg: types.Message, state: FSMContext):
+        data = await state.get_data()
+        images = data.get("images", [])
+
         if msg.photo:
             file_id = msg.photo[-1].file_id
         else:
             file_id = msg.text
-        await state.update_data(image=file_id)
-        await msg.answer("💰 Kitob narxini kiriting (so‘mda):")
+
+        images.append(file_id)
+        await state.update_data(images=images)
+
+        if len(images) < 3:
+            await msg.answer(
+                f"🖼 {len(images)}-rasm qabul qilindi. Yana rasm yuboring yoki /next buyrug‘ini bosing."
+            )
+        else:
+            await msg.answer("✅ 3 ta rasm qabul qilindi.")
+            await AddBook.price.set()
+            await msg.answer("💰 Kitob narxini kiriting (so‘mda):")
+
+    @dp.message_handler(commands="next", state=AddBook.Images)
+    async def finish_images(msg: types.Message, state: FSMContext):
+        data = await state.get_data()
+        images = data.get("images", [])
+        if not images:
+            await msg.answer(
+                "❗️Hech qanday rasm topilmadi. Iltimos, kamida bitta rasm yuboring."
+            )
+            return
         await AddBook.price.set()
+        await msg.answer("💰 Kitob narxini kiriting (so‘mda):")
 
     @dp.message_handler(state=AddBook.price)
     async def confirm_book_preview(msg: types.Message, state: FSMContext):
-        # Narxni string sifatida saqlaymiz
         price_text = msg.text.strip()
-
         await state.update_data(price=price_text)
         data = await state.get_data()
         text = (
@@ -82,20 +106,31 @@ def register(dp: Dispatcher):
     async def confirm_book(call: types.CallbackQuery, state: FSMContext):
         data = await state.get_data()
         db = get_db()
-        db.execute(
+        cursor = db.cursor()
+
+        # Kitobni qo‘shish
+        cursor.execute(
             """
-            INSERT INTO books (title, author, pages, description, year, image, price)
-            VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            INSERT INTO books (title, author, pages, description, year, price)
+            VALUES (?, ?, ?, ?, ?, ?)""",
             (
                 data["title"],
                 data["author"],
                 data["pages"],
                 data["description"],
                 data["year"],
-                data["image"],
                 data["price"],
             ),
         )
+        book_id = cursor.lastrowid
+
+        # Rasmlarni alohida jadvalga yozish
+        for img in data.get("images", []):
+            cursor.execute(
+                "INSERT INTO book_images (book_id, image) VALUES (?, ?)",
+                (book_id, img),
+            )
+
         db.commit()
         await call.message.edit_text("✅ Kitob muvaffaqiyatli qo‘shildi.")
         await state.finish()

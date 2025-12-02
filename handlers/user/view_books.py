@@ -20,6 +20,7 @@ def register(dp: Dispatcher):
 
     @dp.callback_query_handler(lambda c: c.data.startswith("book_"))
     async def show_book(call: types.CallbackQuery):
+        await call.answer()
         book_id = int(call.data.split("_")[1])
         db = get_db()
         cursor = db.cursor()
